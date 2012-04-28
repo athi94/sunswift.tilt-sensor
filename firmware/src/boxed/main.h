@@ -7,16 +7,18 @@
 
 #ifndef MAIN_H_
 #define MAIN_H_
-#endif /* MAIN_H_ */
+
+
+#include <stdio.h>
 
 float CompFilter(float PrevAngle, float GyroOmega, float AccelAngle, float dT, float Offset);
 float kalman_update(float gyro_rate, float accel_angle, float dT);
 
 #define SAMPLE_COUNT 512
 #define APPLY_GYRO_OFFSET 1 //Edit needed (Check if sensors are working)
-#define ENABLE_KALMAN 1
-#define ENABLE_COMPLIMENTARY 1
-#define ENABLE_CAN 1
+#define ENABLE_KALMAN 0
+#define ENABLE_COMPLIMENTARY 0
+#define ENABLE_CAN 0
 
 #define Pi 3.141592653589793 // The glorious Pi!
 
@@ -84,7 +86,7 @@ void PrintUint(uint32_t Input){
 	for (i=0; i<32 ; i++)
 	{
 		OutputVar=( (Input & (ShiftChar << (31-i))) != 0);
-		sprintf(UARTBUFF, "%u", OutputVar);
+		sprintf(UARTBUFF, "%u", (unsigned int)  OutputVar);
 		UARTSend( &UARTBUFF[0], 1 );
 
 			if((i+1)%8 == 0){
@@ -785,3 +787,5 @@ uint32_t gpioGetValue (uint32_t portNum, uint32_t bitPos)
 
   return value;
 }
+
+#endif /* MAIN_H_ */
