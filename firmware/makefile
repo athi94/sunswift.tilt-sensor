@@ -1,138 +1,97 @@
-#directory definitions
-ROOT = ../../..
+# Top level makefile for template project
+# The only modifications you should need to make are to change the CHIP, MAIN_NAME and
+# add any custom C source files to OBJECTS
+
+# Set CHIP to be lpc11c14, lpc1768 or msp430f149 depending on what micro you're using
+CHIP = lpc11c14
+
+# This should be what your main C file is called
+MAIN_NAME = tilt
+
+# Directory definitions
+ROOT = ..
 SCANDAL = $(ROOT)/scandal
-ARCH = $(SCANDAL)/src/arch/lpc11c14
-UTILS = $(ROOT)/utils
-LINKER = $(ARCH)/linker
-CMSIS = $(ARCH)/cmsis
-DRIVERS = $(ARCH)/driver
-STARTUP = $(ARCH)/startup
-BUILD=./build# never . or clean will delete everything
+ARCH = $(SCANDAL)/src/arch/$(CHIP)
+DRIVERS = $(ARCH)/drivers
+UTILS = $(ROOT)/utilities
+BUILD = ./build# never . or clean will delete everything
 SRC = ./src
 
-#define utilities
-CC = arm-none-eabi-gcc
-AS = arm-none-eabi-as
-LD = arm-none-eabi-ld
-SIZE = arm-none-eabi-size
-OBJCOPY = arm-none-eabi-objcopy
-START_PROGRAMMER = dfu-util
-FLASH_CHIP = crt_emu_lpc11_13_nxp
-CHECKSUM = checksum
+# Custom project objects
+OBJECTS  = $(MAIN_NAME).o scandal_obligations.o
+# Scandal objects
+OBJECTS += engine.o error.o manager.o maths.o message.o utils.o stdio.o leds.o wavesculptor.o
+# Driver objects
+OBJECTS += can.o flash.o uart.o gpio.o timer.o wdt.o system.o
+# Add other objects here or in the architecture specific makefile
+OBJECTS += sensors.o
 
-#architecture
-MCU = cortex-m0
-UC = LPC11C14/301
-
-#define files
-PROJECT = main
-
-#LINKSCRIPT = lpc1114_flash_crp.ld
-LINKSCRIPT=lpc1114_flash_can_crp.ld
-#Should LINKSCRIPT=lpc1114_flash_can_crp.ld, It is slightly different in terms of memory management
-#Changed on 23 Aug - Charith, saw something in the user manual to do with some black of memory at the
-#top being required by the CAN controller
-STARTUPSCRIPT = cr_startup_lpc11
-
-OBJECTS  = $(PROJECT).o scandal_obligations.o
-OBJECTS += core_cm0.o system_LPC11xx.o leds.o
-OBJECTS += gpio.o timer32.o uart.o can.o i2c.o flash.o
-OBJECTS += engine.o error.o manager.o maths.o message.o utils.o
-OBJECTS += $(STARTUPSCRIPT).o
-
-#compiler flags
-OPTIMISATION = s # we need this to fit our code in the flash at the moment :-(
-DEBUG = 
-
-CFLAGS  = -mcpu=$(MCU) -DLPC11C14 -D__NEWLIB__ -D__USE_CMSIS -D__CODE_RED -mthumb -O$(OPTIMISATION) $(DEBUG)
-CFLAGS += -I$(SCANDAL)/include # for scandal includes
+CFLAGS  = -I$(SCANDAL)/include # for scandal includes
 CFLAGS += -I$(ARCH)/include # for arch drivers
-CFLAGS += -I$(ARCH) # for cmsis
-CFLAGS += -I./include # for project includes
-CFLAGS += -lm #Added lm for math.h
+CFLAGS += -I$(ARCH) #for anything else
+CFLAGS += -I./include # for project local includes
+# We should really try to minimise all warnings for error free code. Wall is needed for this.
+CFLAGS += -Wall
+# Optimise for size. Can also optimise for performance with 1, 2 or 3
+CFLAGS += -Os
+CFLAGS += -D$(CHIP)
 
-LSCRIPT = $(LINKER)/$(LINKSCRIPT)
-LFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/$(PROJECT).map -Xlinker --gc-sections -L $(LINKER) -T "$(LSCRIPT)"
+.PHONY: clean realclean cscope
 
-.PHONY: all clean program
+# For printing out colours in makefile scripts
+RED="\\033[91m"
+NORMAL="\\033[0m"
+YELLOW="\\e[1\;33m"
 
-all: $(PROJECT).axf $(PROJECT).bin
+# Include the chip specific makefile
+include makefile.$(CHIP)
 
-$(PROJECT).axf: $(OBJECTS)
-	@$(CC) $(CFLAGS) $(LFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $(BUILD)/$(PROJECT).axf 
-
-###compile object files individually
-$(PROJECT).o: src/$(PROJECT).c
+# This target is special because it's the first in the list. We should make the build directory
+# here and do anything else that only needs to happen once
+$(BUILD)/$(MAIN_NAME).o: src/$(MAIN_NAME).c
+	@if [ ! -e "cscope.out" ]; then \
+		echo -e "[HINT] $(RED)You should learn to use cscope! Type make cscope$(NORMAL)"; \
+	fi
 	@mkdir -p $(BUILD)
-	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@echo "[CC] $@"
+	@if [ "$(BUILD)" == "." ]; then echo -e "$(RED)Don't use . as BUILD$(NORMAL)"; exit 1; fi
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-scandal_obligations.o: src/scandal_obligations.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+# Project local objects
+$(BUILD)/%.o: src/%.c
+	@echo "[CC] $@"
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-leds.o: src/leds.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+# Architecture specific drivers
+$(BUILD)/%.o: $(DRIVERS)/%.c
+	@echo "[CC] $@"
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-core_cm0.o: $(CMSIS)/core_cm0.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+# Scandal engine
+$(BUILD)/%.o: $(SCANDAL)/src/%.c
+	@echo "[CC] $@"
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-engine.o: $(SCANDAL)/src/engine.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+# Scandal drivers
+$(BUILD)/%.o: $(SCANDAL)/src/drivers/%.c
+	@echo "[CC] $@"
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-error.o: $(SCANDAL)/src/error.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-manager.o: $(SCANDAL)/src/manager.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-message.o: $(SCANDAL)/src/message.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-utils.o: $(SCANDAL)/src/utils.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-maths.o: $(SCANDAL)/src/maths.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-system_LPC11xx.o: $(CMSIS)/system_LPC11xx.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-gpio.o: $(DRIVERS)/gpio.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-timer32.o: $(DRIVERS)/timer32.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-uart.o: $(DRIVERS)/uart.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-can.o: $(DRIVERS)/can.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-flash.o: $(DRIVERS)/flash.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-i2c.o: $(DRIVERS)/i2c.c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-$(STARTUPSCRIPT).o: $(STARTUP)/$(STARTUPSCRIPT).c
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
-
-program: $(PROJECT).axf
-	@# see http://support.code-red-tech.com/CodeRedWiki/CommandLineFlashProgramming
-	#-$(START_PROGRAMMER) -d 0x471:0xdf55 -c 0 -t 2048 -R -D $(UTILS)/LPCXpressoWIN.enc
-	#@sleep 1
-	@#program using .axf
-	$(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load-exec=$(BUILD)/$(PROJECT).axf
-	@#program using .bin, doesn't seem to work atm
-	@#sudo $(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load=$(BUILD)/$(PROJECT).bin -load-base=0x0000
-
+# Remove the build directory
 clean:
-	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
+	@echo "[CLEAN] $(BUILD)"
+	@if [ "$(BUILD)" == "." ]; then echo -e "$(RED)Don't use . as BUILD$(NORMAL)"; exit 1; fi
 	@rm -Rf $(BUILD)
 
-$(PROJECT).bin: $(PROJECT).axf
-	@$(SIZE) $(BUILD)/$(PROJECT).axf; 
-	$(OBJCOPY) -O binary $(BUILD)/$(PROJECT).axf $(BUILD)/$(PROJECT).bin;
-	$(CHECKSUM) -p $(UC) -d $(BUILD)/$(PROJECT).bin;
-	@echo
+# Remove build directory and cscope
+realclean: clean
+	@rm -f cscope.out cscope.files
+
+# Generate cscope database from all c, h and assembly files
+cscope:
+	@echo "[GEN] cscope"
+	@if [ -d "$(SCANDAL)" ]; then \
+		find $(SCANDAL) -name "*.[chSs]" >> cscope.files; \
+	fi
+	@find . -name "*.[chSs]">> cscope.files
+	@cscope -b -f cscope.out

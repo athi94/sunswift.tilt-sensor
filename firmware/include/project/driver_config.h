@@ -8,7 +8,13 @@
 #ifndef DRIVER_CONFIG_H_
 #define DRIVER_CONFIG_H
 
+#if defined(lpc11c14)
 #include <cmsis/LPC11xx.h>
+#endif
+
+#if defined(lpc1768)
+#include <cmsis/LPC17xx.h>
+#endif
 
 #define CONFIG_ENABLE_DRIVER_CRP						1
 #define CONFIG_CRP_SETTING_NO_CRP						1
