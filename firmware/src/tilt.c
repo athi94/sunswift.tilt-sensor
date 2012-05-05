@@ -42,25 +42,23 @@
 
 
 void setup_tilt(void) {
-    GPIO_Init();
-    GPIO_SetDir(GRN_LED_PRT,GRN_LED_BIT,1); //Grn LED, Out
-    GPIO_SetDir(YEL_LED_PRT,YEL_LED_BIT,1); //Yel LED, Out
+
+  scandal_init();
+  GPIO_Init();
+  GPIO_SetDir(GRN_LED_PRT,GRN_LED_BIT,1); //Grn LED, Out
+  GPIO_SetDir(YEL_LED_PRT,YEL_LED_BIT,1); //Yel LED, Out
     
-	I2CInit( (uint32_t)I2CMASTER );
+  I2CInit( (uint32_t)I2CMASTER );
 	
-    init_timer32PWM(1, 1463, 2);
-    enable_timer32(1);
-    UART_Init(115200); //Init UART at 115200bps
-    
-    
-    UART_printf("i??");
-    gyroinit(); // Initialize the Gyro
-    UART_printf("init_acc");
-    accinit(); // Initialize the Accelero
-    UART_printf("init_ma");
-    //maginit(); // Initialise the Magnetometer
-    UART_printf("hello");
-    //*/
+  init_timer32PWM(1, 1463, 2);
+  enable_timer32(1);
+
+ 
+  UART_Init(115200); //Init UART at 115200bps
+
+  gyroinit(); // Initialize the Gyro
+  accinit(); // Initialize the Accelero
+  //maginit(); // Initialise the Magnetometer
 }
 
 typedef float tfloat;
@@ -105,18 +103,33 @@ int main(void){
     tfloat newPhi[3];
     tfloat w[3];
     tfloat dt;
+    sc_time_t t_old = sc_get_timer();
+
+    oldPhi[0] = 0;
+    oldPhi[1] = 0;
+    oldPhi[2] = 0;
+
 
     while(1){
-        //TODO: Read Gyro
+
         readgyro(0, &gyrox, &gyroy, &gyroz, &gyrot);
         gyro2omega(gyrox, gyroy, gyroz, &w[0], &w[1], &w[2]);
-        
-        //TODO: Accelerometer:
+	w[0]*=Pi/180.0;
+	w[1]*=Pi/180.0;
+	w[2]*=Pi/180.0;        
+
+
         readacc(0, &accx, &accy, &accz, &acct);
         acc2deg(accx, accy, accz, &AccXDeg, &AccYDeg); 
 
-	integrateOneStep(dt,w,oldPhi,newPhi);
-        
-        UART_printf("Gyros: X:%f, Y:%f, Z:%f\n\r", w[0],w[1],w[2]);
+	sc_time_t t = sc_get_timer();
+	dt = (tfloat)(t - t_old);
+	t_old = t;
+
+	integrateOneStep(dt/1000.0,w,oldPhi,newPhi);
+
+        UART_printf("%f,%f,%f\n\r",newPhi[0],newPhi[1],newPhi[2]);
+	memcpy(oldPhi,newPhi,3*sizeof(tfloat));
+	scandal_delay(100);
     }
 }
