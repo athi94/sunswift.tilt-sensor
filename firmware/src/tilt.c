@@ -81,8 +81,7 @@ int main(void){
     
     int32_t gyrot=0; // Gyro Temp Out
     int32_t gyrox=0; // Gyro X Out
-    int32_t gyroy=0; // Gyro Y Out    gyroinit(); // Initialize the Gyro
-
+    int32_t gyroy=0; // Gyro Y Out
     int32_t gyroz=0; // Gyro Z Out
     
     int32_t acct=0; // Acc Temp Out
@@ -114,6 +113,8 @@ int main(void){
 
         readgyro(0, &gyrox, &gyroy, &gyroz, &gyrot);
         gyro2omega(gyrox, gyroy, gyroz, &w[0], &w[1], &w[2]);
+	/* The gyro2omega function takes in the raw gyro data and converts
+	   it into degrees per second. */
 	w[0]*=Pi/180.0;
 	w[1]*=Pi/180.0;
 	w[2]*=Pi/180.0;        
@@ -129,6 +130,8 @@ int main(void){
 	integrateOneStep(dt/1000.0,w,oldPhi,newPhi);
 
         UART_printf("GyroInt:%f,%f,%f\n\r",newPhi[0],newPhi[1],newPhi[2]);
+	//UART_printf("GyroOmega:%3.3f, %3.3f, %3.3f\n\r", w[0], w[1], w[2]);
+	//UART_printf("dt:%3.3f\n\r", dt/1000);
 	UART_printf("AccRaw:%3.3f,%3.3f\n\r", AccXDeg, AccYDeg);
 	UART_printf("What's Going on?: f:%f, 3f5:%3.5f\n\r", newPhi[0], newPhi[0]);
 	memcpy(oldPhi,newPhi,3*sizeof(tfloat));
