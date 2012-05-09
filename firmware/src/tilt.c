@@ -119,7 +119,7 @@ int main(void){
 	w[2]*=Pi/180.0;        
 
 
-        readacc(0, &accx, &accy, &accz, &acct);
+        readacc(2, &accx, &accy, &accz, &acct);
         acc2deg(accx, accy, accz, &AccXDeg, &AccYDeg); 
 
 	sc_time_t t = sc_get_timer();
@@ -128,7 +128,9 @@ int main(void){
 
 	integrateOneStep(dt/1000.0,w,oldPhi,newPhi);
 
-        UART_printf("%f,%f,%f\n\r",newPhi[0],newPhi[1],newPhi[2]);
+        UART_printf("GyroInt:%f,%f,%f\n\r",newPhi[0],newPhi[1],newPhi[2]);
+	UART_printf("AccRaw:%3.3f,%3.3f\n\r", AccXDeg, AccYDeg);
+	UART_printf("What's Going on?: f:%f, 3f5:%3.5f\n\r", newPhi[0], newPhi[0]);
 	memcpy(oldPhi,newPhi,3*sizeof(tfloat));
 	scandal_delay(100);
     }
