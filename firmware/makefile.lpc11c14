@@ -90,6 +90,9 @@ program: $(BUILD)/main.axf
 			rm /tmp/flash.out; \
 		fi; \
 	fi
+uart: build/main.bin
+	@echo "attempting program using the UART bootlaoder"
+	@sudo ../utilities/lpc21isp -bin build/main.bin -control /dev/ttyUSB0 115200 12000
 
 #program using .bin, doesn't seem to work atm
 #sudo $(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load=$(BUILD)/main.bin -load-base=0x0000

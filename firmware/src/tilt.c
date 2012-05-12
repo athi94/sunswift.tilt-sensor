@@ -137,6 +137,9 @@ int main(void){
 	UART_printf("AccAngle:%3.3f,%3.3f\n\r", AccXDeg, AccYDeg);
 	//UART_printf("What's Going on?: f:%f, 3f5:%3.5f, loop:%3.5f\n\r", newPhi[0], newPhi[0], testloop);
 	memcpy(oldPhi,newPhi,3*sizeof(tfloat));
+
+    	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,1);
 	scandal_delay(100);
+	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,0);
     }
 }
