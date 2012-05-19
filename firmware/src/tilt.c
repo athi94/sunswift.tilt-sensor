@@ -95,6 +95,12 @@ void processModelJacobian( tfloat* X, tfloat* w, LPMATRIX J, tfloat step ) {
 
 }
 
+void observationModel( tfloat* X, tfloat* Y) {
+  // Take constant gravity vector, rotate into rotated frame
+
+}
+
+
 void integrateOneStep(tfloat dt, tfloat* w, tfloat* oldPhi, tfloat* newPhi) {
 
   processModel(oldPhi,w,newPhi);
@@ -159,9 +165,11 @@ int main(void){
 	// Prediction from old best guess
 	integrateOneStep(dt/1000.0,w,X,newPhi);
 	
-	processModelJacobian(X,w,J,0.0);
+	processModelJacobian(X,w,J,0.001);
 
 	memcpy(X,newPhi,3*sizeof(tfloat));
+
+	UART_printf("%1.5f,%1.5f,%1.5f\n\r",X[0],X[1],X[2]);
 
     	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,1);
 	scandal_delay(100);
