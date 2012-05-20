@@ -16,10 +16,9 @@ DRIVERS = $(ARCH)/drivers
 UTILS = $(ROOT)/utilities
 BUILD = ./build# never . or clean will delete everything
 SRC = ./src
-MESCH = $(ROOT)/MatrixLiteLib
 
 # Custom project objects
-OBJECTS  = $(MAIN_NAME).o scandal_obligations.o sensors.o
+OBJECTS  = $(MAIN_NAME).o scandal_obligations.o sensors.o KalmanUpdate.o rt_nonfinite.o
 # Scandal objects
 OBJECTS += engine.o error.o manager.o maths.o message.o utils.o stdio.o leds.o wavesculptor.o
 # Driver objects
@@ -27,13 +26,10 @@ OBJECTS += can.o flash.o uart.o gpio.o timer.o wdt.o system.o
 # Add other objects here or in the architecture specific makefile
 OBJECTS += 
 
-# MatrixLiteLib objects
-OBJECTS += MatrixLiteLib.o
 
 CFLAGS  = -I$(SCANDAL)/include # for scandal includes
 CFLAGS += -I$(ARCH)/include # for arch drivers
 CFLAGS += -I$(ARCH) #for anything else
-CFLAGS += -I$(MESCH)/include
 CFLAGS += -I./include # for project local includes
 # We should really try to minimise all warnings for error free code. Wall is needed for this.
 CFLAGS += -Wall
@@ -79,11 +75,6 @@ $(BUILD)/%.o: $(SCANDAL)/src/%.c
 
 # Scandal drivers
 $(BUILD)/%.o: $(SCANDAL)/src/drivers/%.c
-	@echo "[CC] $@"
-	@$(CC) $(CFLAGS) -c -o $@ $<
-
-# MatrixLiteLib Maths library
-$(BUILD)/%.o: $(MESCH)/src/%.c
 	@echo "[CC] $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 

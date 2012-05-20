@@ -33,8 +33,7 @@
 
 #include <math.h>
 
-#include "MatrixLiteLib.h"
-
+#include "KalmanUpdate.h"
 #include "sensors.h"
 
 #define GRN_LED_PRT 2
@@ -61,56 +60,9 @@ void setup_tilt(void) {
   gyroinit(); // Initialize the Gyro
   accinit(); // Initialize the Accelero
   //maginit(); // Initialise the Magnetometer
+
+  KalmanUpdate_initialize();
 }
-
-typedef float tfloat;
-
-void processModel( tfloat* X, tfloat* w, tfloat* Xdot) {
-  tfloat sinphix = sin(X[0]);
-  tfloat cosphix = cos(X[0]);
-  tfloat cosphiy = cos(X[1]);
-  tfloat tanphiy = tan(X[1]);
-
-  Xdot[0] = (w[0] + (w[1]*sinphix + w[2]*cosphix)*tanphiy);
-  Xdot[1] =  w[1]*cosphix - w[2]*sinphix;
-  Xdot[2] = (w[1]*sinphix + w[2]*cosphix)/cosphiy;
-}
-
-void processModelJacobian( tfloat* X, tfloat* w, LPMATRIX J, tfloat step ) {
-  tfloat tmp;
-  tfloat Xtmp[3];
-  tfloat dX[3];
-  int i,j;
-  for(i=0; i<3; i++) {
-    for(j=0; j<3; j++) {
-      memcpy(Xtmp,X,3*sizeof(tfloat));
-      Xtmp[i]+=step;
-      processModel(Xtmp,w,dX);
-      tmp=dX[j];
-      processModel(X,w,dX);
-      tmp-=dX[j];
-      MatrixSet(J,i,j,tmp/step);
-    }
-  }
-
-}
-
-void observationModel( tfloat* X, tfloat* Y) {
-  // Take constant gravity vector, rotate into rotated frame
-
-}
-
-
-void integrateOneStep(tfloat dt, tfloat* w, tfloat* oldPhi, tfloat* newPhi) {
-
-  processModel(oldPhi,w,newPhi);
-
-  newPhi[0] = oldPhi[0] + newPhi[0]*dt;
-  newPhi[1] = oldPhi[1] + newPhi[1]*dt;
-  newPhi[2] = oldPhi[2] + newPhi[2]*dt;
-}
-
-
 
 int main(void){
     setup_tilt();
@@ -131,18 +83,20 @@ int main(void){
     float AccXDeg;
     float AccYDeg;
 
-    tfloat X[3];
-    tfloat newPhi[3];
-    tfloat w[3];
-    tfloat dt;
+
+    real_T dt;
+    real_T w[3];
+    real_T P[9];
+    real_T Pnew[9];
+    real_T X[9];
+    real_T Xnew[9];
+    real_T acc[3];
+
+    X[0] = 0.0;
+    X[1] = 0.0;
+    X[2] = 0.0;
+
     sc_time_t t_old = sc_get_timer();
-
-    X[0] = 0;
-    X[1] = 0;
-    X[2] = 0;
-
-    LPMATRIX J = CreateMatrix(3,3);
-
 
     while(1){
 
@@ -150,26 +104,28 @@ int main(void){
         gyro2omega(gyrox, gyroy, gyroz, &w[0], &w[1], &w[2]);
 	/* The gyro2omega function takes in the raw gyro data and converts
 	   it into degrees per second. */
+
+	// Need to work with rad/s
 	w[0]*=Pi/180.0;
 	w[1]*=Pi/180.0;
 	w[2]*=Pi/180.0;
 
 	readacc(2, &accx, &accy, &accz, &acct);
-        acc2deg(accx, accy, accz, &AccXDeg, &AccYDeg); 
+	acc[0] = (float)accx;
+	acc[1] = (float)accy;
+	acc[2] = (float)accz;
+
 
 	sc_time_t t = sc_get_timer();
-	dt = (tfloat)(t - t_old);
+	dt = (real_T)(t - t_old);
 	t_old = t;
-
 	
-	// Prediction from old best guess
-	integrateOneStep(dt/1000.0,w,X,newPhi);
-	
-	processModelJacobian(X,w,J,0.001);
+	// Uses the matlab generated code to do the Kalman Update.
+	KalmanUpdate(X,P,w,acc,dt,Xnew,Pnew);
+	memcpy(P,Pnew,9*sizeof(real_T));
+	memcpy(X,Xnew,3*sizeof(real_T));
 
-	memcpy(X,newPhi,3*sizeof(tfloat));
-
-	UART_printf("%1.5f,%1.5f,%1.5f\n\r",X[0],X[1],X[2]);
+	//UART_printf("%f,%f,%f",X[0],X[1],X[2]);
 
     	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,1);
 	scandal_delay(100);
