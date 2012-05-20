@@ -97,3 +97,6 @@ uart: build/main.bin
 #program using .bin, doesn't seem to work atm
 #sudo $(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load=$(BUILD)/main.bin -load-base=0x0000
 
+flash: build/main.bin
+	#echo "attempting to program using the UART bootloader"
+	@sudo ../utilities/lpc21isp -bin build/main.bin -control /dev/ttyUSB0 115200 12000
