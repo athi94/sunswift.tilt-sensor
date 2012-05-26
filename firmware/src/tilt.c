@@ -124,9 +124,9 @@ int main(void){
 	KalmanUpdate(X,P,w,acc,dt,Xnew,Pnew);
 	memcpy(P,Pnew,9*sizeof(real_T));
 	memcpy(X,Xnew,3*sizeof(real_T));
-
-	//UART_printf("%f,%f,%f",X[0],X[1],X[2]);
-
+	// lpc1114_flash_can_crp.ld
+		UART_printf("%f,%f,%f\n",X[0],X[1],X[2]);
+	//UART_printf("\n");
     	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,1);
 	scandal_delay(100);
 	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,0);
