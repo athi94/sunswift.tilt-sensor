@@ -1,9 +1,9 @@
 /*
  * rtwtypes.h
  *
- * Embedded MATLAB Coder code generation for M-function 'KalmanUpdate'
+ * Code generation for function 'KalmanUpdate'
  *
- * C source code generated on: Sun May 20 12:50:56 2012
+ * C source code generated on: Sat Jul 07 10:16:21 2012
  *
  */
 
@@ -25,6 +25,9 @@
  *   Device type: Generic->MATLAB Host Computer
  *   Number of bits:     char:   8    short:   16    int:  32
  *                       long:  32      native word size:  32
+ *   Byte ordering: LittleEndian
+ *   Signed integer division rounds to: Zero
+ *   Shift right on a signed integer as arithmetic shift: on
  *=======================================================================*/
 
 /*=======================================================================* 
@@ -44,8 +47,8 @@ typedef float real32_T;
 typedef double real64_T;
 
 /*===========================================================================* 
- * Generic type definitions: real_T, time_T, boolean_T, char_T, int_T,       * 
- *                           uint_T and byte_T.                              * 
+ * Generic type definitions: real_T, time_T, boolean_T, int_T, uint_T,       * 
+ *                           ulong_T, char_T and byte_T.                     * 
  *===========================================================================*/
 
 typedef double real_T;
@@ -53,7 +56,9 @@ typedef double time_T;
 typedef unsigned char boolean_T;
 typedef int int_T;
 typedef unsigned int uint_T;
+typedef unsigned long ulong_T;
 typedef char char_T;
+typedef char_T byte_T;
 
 /*===========================================================================* 
  * Complex number type definitions                                           * 
@@ -135,7 +140,7 @@ typedef char char_T;
 #endif
 
 /*
- * Real-Time Workshop assumes the code is compiled on a target using a 2''s compliment representation
+ * MATLAB for code generation assumes the code is compiled on a target using a 2's compliment representation
  * for signed integer values.
  */
 #if ((SCHAR_MIN + 1) != -SCHAR_MAX)
@@ -151,4 +156,4 @@ typedef char char_T;
 
 #endif
 #endif
-/* End of Embedded MATLAB Coder code generation (rtwtypes.h) */
+/* End of code generation (rtwtypes.h) */

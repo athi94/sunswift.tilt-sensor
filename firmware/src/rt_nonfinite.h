@@ -1,16 +1,16 @@
 /*
  * rt_nonfinite.h
  *
- * Embedded MATLAB Coder code generation for M-function 'KalmanUpdate'
+ * Code generation for function 'KalmanUpdate'
  *
- * C source code generated on: Sun May 20 12:50:56 2012
+ * C source code generated on: Sat Jul 07 10:16:21 2012
  *
  */
 
 #ifndef __RT_NONFINITE_H__
 #define __RT_NONFINITE_H__
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
 #include <float.h>
 #endif
 #include <stddef.h>
@@ -28,5 +28,26 @@ extern boolean_T rtIsInfF(real32_T value);
 extern boolean_T rtIsNaN(real_T value);
 extern boolean_T rtIsNaNF(real32_T value);
 
+typedef struct {
+  struct {
+    uint32_T wordH;
+    uint32_T wordL;
+  } words;
+} BigEndianIEEEDouble;
+
+typedef struct {
+  struct {
+    uint32_T wordL;
+    uint32_T wordH;
+  } words;
+} LittleEndianIEEEDouble;
+
+typedef struct {
+  union {
+    real32_T wordLreal;
+    uint32_T wordLuint;
+  } wordL;
+} IEEESingle;
+
 #endif
-/* End of Embedded MATLAB Coder code generation (rt_nonfinite.h) */
+/* End of code generation (rt_nonfinite.h) */

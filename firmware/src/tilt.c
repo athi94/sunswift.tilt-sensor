@@ -34,6 +34,7 @@
 #include <math.h>
 
 #include "KalmanUpdate.h"
+#include "KalmanUpdate_initialize.h"
 #include "sensors.h"
 
 #define GRN_LED_PRT 2
@@ -79,29 +80,28 @@ int main(void){
     int32_t accx=0; // Acc X Out
     int32_t accy=0; // Acc Y Out
     int32_t accz=0; // Acc Z Out
-    
-    float AccXDeg;
-    float AccYDeg;
-
 
     real_T dt;
     real_T w[3];
-    real_T P[9];
+    real_T P[9] = {Pi/100.0,0,0,0,Pi/100.0,0,0,0,Pi/100.0};
     real_T Pnew[9];
-    real_T X[9];
+    real_T X[9] = {0.0,0.0,0.0};
     real_T Xnew[9];
     real_T acc[3];
-
-    X[0] = 0.0;
-    X[1] = 0.0;
-    X[2] = 0.0;
+    real_T Q[9] = {Pi/10.0,0,0,0,Pi/10.0,0,0,0,Pi/10.0};
+    real_T R[9] = {0.1,0,0,0,0.1,0,0,0,0.1};
 
     sc_time_t t_old = sc_get_timer();
 
     while(1){
 
         readgyro(0, &gyrox, &gyroy, &gyroz, &gyrot);
-        gyro2omega(gyrox, gyroy, gyroz, &w[0], &w[1], &w[2]);
+	// MATLAB uses doubles, gyro2omega uses floats. Can we get MATLAB to use floats?
+	float wf[3];
+        gyro2omega(gyrox, gyroy, gyroz, &wf[0], &wf[1], &wf[2]);
+		w[0] = (real_T) wf[0];
+		w[1] = (real_T) wf[1];
+		w[2] = (real_T) wf[2];
 	/* The gyro2omega function takes in the raw gyro data and converts
 	   it into degrees per second. */
 
@@ -111,24 +111,28 @@ int main(void){
 	w[2]*=Pi/180.0;
 
 	readacc(2, &accx, &accy, &accz, &acct);
-	acc[0] = (float)accx;
-	acc[1] = (float)accy;
-	acc[2] = (float)accz;
+	acc[0] = (real_T)accx;
+	acc[1] = (real_T)accy;
+	acc[2] = (real_T)accz;
 
 
 	sc_time_t t = sc_get_timer();
 	dt = (real_T)(t - t_old);
 	t_old = t;
 	
+	real_T accnorm = sqrt( pow(acc[0],2) + pow(acc[1],2) + pow(acc[2],2) );
+	acc[0] = acc[0]/accnorm;
+	acc[1] = acc[1]/accnorm;
+	acc[2] = acc[2]/accnorm;
+	
 	// Uses the matlab generated code to do the Kalman Update.
-	KalmanUpdate(X,P,w,acc,dt,Xnew,Pnew);
+	KalmanUpdate(X,P,w,acc,dt/1000.0,Q,R,Xnew,Pnew);
 	memcpy(P,Pnew,9*sizeof(real_T));
 	memcpy(X,Xnew,3*sizeof(real_T));
 	// lpc1114_flash_can_crp.ld
-		UART_printf("%f,%f,%f\n",X[0],X[1],X[2]);
-	//UART_printf("\n");
+	UART_printf("%1.5f,%1.5f,%1.5f\n",X[0],X[1],X[2]);
+	scandal_delay(1000);
     	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,1);
-	scandal_delay(100);
 	GPIO_SetValue(YEL_LED_PRT, YEL_LED_BIT,0);
     }
 }

@@ -26,6 +26,7 @@ extern volatile uint32_t I2CReadLength, I2CWriteLength;
 //extern volatile uint8_t UARTBuffer[I2C_BUFSIZE];
 
 #include "sensors.h"
+#include <math.h>
 /************************************************************************************************** 
  * Initialisation functions
  *************************************************************************************************/
@@ -329,7 +330,6 @@ void readgyro(uint8_t n, int32_t *gyroxout, int32_t *gyroyout, int32_t *gyrozout
 
 
       clrbuf();
-
       /* Runge Kutta dY calculation, removed and moved away for now
       *      for ( i = 0; i < 3; i++ )
       *           {

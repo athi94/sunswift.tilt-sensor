@@ -18,7 +18,7 @@ BUILD = ./build# never . or clean will delete everything
 SRC = ./src
 
 # Custom project objects
-OBJECTS  = $(MAIN_NAME).o scandal_obligations.o sensors.o KalmanUpdate.o rt_nonfinite.o
+OBJECTS  = $(MAIN_NAME).o scandal_obligations.o sensors.o KalmanUpdate.o rt_nonfinite.o KalmanUpdate_data.o KalmanUpdate_initialize.o KalmanUpdate_terminate.o rtGetInf.o rtGetNaN.o inv.o mldivide.o
 # Scandal objects
 OBJECTS += engine.o error.o manager.o maths.o message.o utils.o stdio.o leds.o wavesculptor.o
 # Driver objects

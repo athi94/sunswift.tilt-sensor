@@ -1,14 +1,20 @@
 /*
  * rt_nonfinite.c
  *
- * Embedded MATLAB Coder code generation for M-function 'KalmanUpdate'
+ * Code generation for function 'KalmanUpdate'
  *
- * C source code generated on: Sun May 20 12:50:56 2012
+ * C source code generated on: Sat Jul 07 10:16:21 2012
  *
  */
 
+/*
+ * Abstract:
+ *      MATLAB for code generation function to initialize non-finites,
+ *      (Inf, NaN and -Inf).
+ */
 #include "rt_nonfinite.h"
-#define NumBitsPerChar	8
+#include "rtGetNaN.h"
+#include "rtGetInf.h"
 
 real_T rtInf;
 real_T rtMinusInf;
@@ -19,125 +25,23 @@ real32_T rtNaNF;
 
 /* Function: rt_InitInfAndNaN ==================================================
  * Abstract:
- *	Initialize the rtInf, rtMinusInf, and rtNaN needed by the
- *	generated code. NaN is initialized as non-signaling. Assumes IEEE.
+ * Initialize the rtInf, rtMinusInf, and rtNaN needed by the
+ * generated code. NaN is initialized as non-signaling. Assumes IEEE.
  */
 void rt_InitInfAndNaN(size_t realSize)
 {
-  size_t bitsPerReal = realSize * (NumBitsPerChar);
-  uint16_T one = 1;
-  enum {
-    LittleEndian,
-    BigEndian
-  } machByteOrder = (*((uint8_T *) &one) == 1) ? LittleEndian : BigEndian;
-  switch (machByteOrder) {
-   case LittleEndian:
-    {
-      typedef struct {
-        uint32_T fraction : 23;
-        uint32_T exponent : 8;
-        uint32_T sign : 1;
-      } LittleEndianIEEESingle;
-
-      typedef struct {
-        struct {
-          uint32_T fraction2;
-        } wordH;
-
-        struct {
-          uint32_T fraction1 : 20;
-          uint32_T exponent : 11;
-          uint32_T sign : 1;
-        } wordL;
-      } LittleEndianIEEEDouble;
-
-      (*(LittleEndianIEEESingle*)&rtInfF).sign = 0;
-      (*(LittleEndianIEEESingle*)&rtInfF).exponent = 0xFF;
-      (*(LittleEndianIEEESingle*)&rtInfF).fraction = 0;
-      rtMinusInfF = rtInfF;
-      rtNaNF = rtInfF;
-      (*(LittleEndianIEEESingle*)&rtMinusInfF).sign = 1;
-      (*(LittleEndianIEEESingle*)&rtNaNF).fraction = 0x7FFFFF;
-      if (bitsPerReal == 32) {
-        (*(LittleEndianIEEESingle*)&rtInf).sign = 0;
-        (*(LittleEndianIEEESingle*)&rtInf).exponent = 0xFF;
-        (*(LittleEndianIEEESingle*)&rtInf).fraction = 0;
-        rtMinusInf = rtInf;
-        rtNaN = rtInf;
-        (*(LittleEndianIEEESingle*)&rtMinusInf).sign = 1;
-        (*(LittleEndianIEEESingle*)&rtNaN).fraction = 0x7FFFFF;
-      } else {
-        (*(LittleEndianIEEEDouble*)&rtInf).wordL.sign = 0;
-        (*(LittleEndianIEEEDouble*)&rtInf).wordL.exponent = 0x7FF;
-        (*(LittleEndianIEEEDouble*)&rtInf).wordL.fraction1 = 0;
-        (*(LittleEndianIEEEDouble*)&rtInf).wordH.fraction2 = 0;
-        rtMinusInf = rtInf;
-        (*(LittleEndianIEEEDouble*)&rtMinusInf).wordL.sign = 1;
-        (*(LittleEndianIEEEDouble*)&rtNaN).wordL.sign = 0;
-        (*(LittleEndianIEEEDouble*)&rtNaN).wordL.exponent = 0x7FF;
-        (*(LittleEndianIEEEDouble*)&rtNaN).wordL.fraction1 = 0xFFFFF;
-        (*(LittleEndianIEEEDouble*)&rtNaN).wordH.fraction2 = 0xFFFFFFFF;
-      }
-    }
-
-    break;
-
-   case BigEndian:
-    {
-      typedef struct {
-        uint32_T sign : 1;
-        uint32_T exponent : 8;
-        uint32_T fraction : 23;
-      } BigEndianIEEESingle;
-
-      typedef struct {
-        struct {
-          uint32_T sign : 1;
-          uint32_T exponent : 11;
-          uint32_T fraction1 : 20;
-        } wordL;
-
-        struct {
-          uint32_T fraction2;
-        } wordH;
-      } BigEndianIEEEDouble;
-
-      (*(BigEndianIEEESingle*)&rtInfF).sign = 0;
-      (*(BigEndianIEEESingle*)&rtInfF).exponent = 0xFF;
-      (*(BigEndianIEEESingle*)&rtInfF).fraction = 0;
-      rtMinusInfF = rtInfF;
-      rtNaNF = rtInfF;
-      (*(BigEndianIEEESingle*)&rtMinusInfF).sign = 1;
-      (*(BigEndianIEEESingle*)&rtNaNF).fraction = 0x7FFFFF;
-      if (bitsPerReal == 32) {
-        (*(BigEndianIEEESingle*)&rtInf).sign = 0;
-        (*(BigEndianIEEESingle*)&rtInf).exponent = 0xFF;
-        (*(BigEndianIEEESingle*)&rtInf).fraction = 0;
-        rtMinusInf = rtInf;
-        rtNaN = rtInf;
-        (*(BigEndianIEEESingle*)&rtMinusInf).sign = 1;
-        (*(BigEndianIEEESingle*)&rtNaN).fraction = 0x7FFFFF;
-      } else {
-        (*(BigEndianIEEEDouble*)&rtInf).wordL.sign = 0;
-        (*(BigEndianIEEEDouble*)&rtInf).wordL.exponent = 0x7FF;
-        (*(BigEndianIEEEDouble*)&rtInf).wordL.fraction1 = 0;
-        (*(BigEndianIEEEDouble*)&rtInf).wordH.fraction2 = 0;
-        rtMinusInf = rtInf;
-        (*(BigEndianIEEEDouble*)&rtMinusInf).wordL.sign = 1;
-        (*(BigEndianIEEEDouble*)&rtNaN).wordL.sign = 0;
-        (*(BigEndianIEEEDouble*)&rtNaN).wordL.exponent = 0x7FF;
-        (*(BigEndianIEEEDouble*)&rtNaN).wordL.fraction1 = 0xFFFFF;
-        (*(BigEndianIEEEDouble*)&rtNaN).wordH.fraction2 = 0xFFFFFFFF;
-      }
-    }
-
-    break;
-  }
+  (void) (realSize);
+  rtNaN = rtGetNaN();
+  rtNaNF = rtGetNaNF();
+  rtInf = rtGetInf();
+  rtInfF = rtGetInfF();
+  rtMinusInf = rtGetMinusInf();
+  rtMinusInfF = rtGetMinusInfF();
 }
 
 /* Function: rtIsInf ==================================================
  * Abstract:
- *	Test if value is infinite
+ * Test if value is infinite
  */
 boolean_T rtIsInf(real_T value)
 {
@@ -145,8 +49,8 @@ boolean_T rtIsInf(real_T value)
 }
 
 /* Function: rtIsInfF =================================================
-* Abstract:
- *	Test if single-precision value is infinite
+ * Abstract:
+ * Test if single-precision value is infinite
  */
 boolean_T rtIsInfF(real32_T value)
 {
@@ -155,11 +59,11 @@ boolean_T rtIsInfF(real32_T value)
 
 /* Function: rtIsNaN ==================================================
  * Abstract:
- *	Test if value is not a number
+ * Test if value is not a number
  */
 boolean_T rtIsNaN(real_T value)
 {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
   return _isnan(value)? TRUE:FALSE;
 #else
   return (value!=value)? 1U:0U;
@@ -168,16 +72,16 @@ boolean_T rtIsNaN(real_T value)
 
 /* Function: rtIsNaNF =================================================
  * Abstract:
- *	Test if single-precision value is not a number
+ * Test if single-precision value is not a number
  */
 boolean_T rtIsNaNF(real32_T value)
 {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
   return _isnan((real_T)value)? true:false;
 #else
   return (value!=value)? 1U:0U;
 #endif
 }
 
-#undef NumBitsPerChar
-/* End of Embedded MATLAB Coder code generation (rt_nonfinite.c) */
+
+/* End of code generation (rt_nonfinite.c) */
